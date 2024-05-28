@@ -1,0 +1,5 @@
+.history
+__pycache__
+
+myvenv*
+wd14_tagger_model
