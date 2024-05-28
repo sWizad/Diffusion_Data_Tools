@@ -23,6 +23,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 MODEL_NAME = "clip-vit-base32-torch"
 
+
 def calculate_similarity_matrix(embeddings, batch_size):
     batch_size = min(embeddings.shape[0], batch_size)
     batch_embeddings = np.array_split(embeddings, batch_size)
@@ -123,7 +124,7 @@ def resize_large_img(image):
         image = cv2.resize(image, (new_width, new_height))
     return image
 
-def crop_image(image, model, output_image_path):
+def crop_image_by_model(image, model, output_image_path):
     results = model.infer(image,confidence=confidence_threshold)
     detections = sv.Detections.from_inference(results)
 
@@ -161,15 +162,15 @@ def capture_frames(video_path, num_frames,out_dir, model, mb, idx0 = 0):
         cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
         ret, frame = cap.read()
         if ret:
-            crop_image(frame, model, os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"))
+            crop_image_by_model(frame, model, os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"))
     
     cap.release()
     return frames
 
 if __name__ == "__main__":
-    video_folder = r'D:\Project\CivitAI\Disney\Princess\Mulan\video'  
+    video_folder = r'D:\Project\CivitAI\Disney\Princess\Test\video'  
     captured_frames_per_min = 40
-    base_dir = r'D:\Project\CivitAI\Disney\Princess\Mulan\crop'
+    base_dir = r'D:\Project\CivitAI\Disney\Princess\Test\crop'
     classes = ["face", "cartoon object", "person"]
     offset_idx = 0
 

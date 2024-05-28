@@ -17,7 +17,7 @@ try:
 except ImportError:
     print("Error: Please install it using: pip install -q fiftyone ftfy")
     sys.exit(1)
-from extract_vdo_by_folder import get_video_duration, process_subfolders
+from old_script.extract_vdo_by_folder import get_video_duration, process_subfolders
 confidence_threshold = 0.01
 
 def resize_large_img(image):
@@ -63,7 +63,11 @@ def crop_image(image, model, output_image_path):
         cropped_output_path = os.path.join(directory, "0x", filename)
         cv2.imwrite(cropped_output_path, image)
 
-def capture_frames(video_path, num_frames,out_dir, model, mb=None, idx0 = 0):
+def capture_frames(video_path, captured_frames_per_min, out_dir, model, mb=None, idx0 = 0):
+        
+    duration = get_video_duration(video_path)  
+    num_frames = int(duration * captured_frames_per_min / 60)
+
     cap = cv2.VideoCapture(video_path, cv2.CAP_FFMPEG)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     frame_indices = [int(i * (total_frames - 1) / (num_frames - 1)) for i in range(num_frames)]

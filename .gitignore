@@ -1,5 +1,6 @@
 .history
 __pycache__
-
-myvenv*
+lib/__pycache__
+myenv
+myenv/*
 wd14_tagger_model
