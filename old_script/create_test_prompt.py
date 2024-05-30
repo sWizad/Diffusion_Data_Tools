@@ -55,9 +55,9 @@ def process_directory(directory, max_num_lines, prompt_per_folder=2, out_path=""
                                 outfile.write(prompt)
                             line_counter += 1
 
-directory = r'D:\Project\CivitAI\Disney\Princess\Aladdin\training data'
-out_path = r'D:\Project\CivitAI\Disney\Princess\Aladdin\sampling'
-suffix  = "<lora:aladdin_pony_v1:0.9>"
+directory = r'D:\Project\CivitAI\DC\batman\draft'
+out_path = r'D:\Project\CivitAI\DC\batman\sampling'
+suffix  = "<lora:batman_pony_v1:0.9>"
 max_num_lines = 12
 
 os.makedirs(out_path, exist_ok=True)

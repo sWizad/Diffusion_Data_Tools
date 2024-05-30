@@ -3,6 +3,7 @@ import cv2, os, sys
 from fastprogress import master_bar, progress_bar
 import numpy as np
 import torch
+import re, random
 try:
     import supervision as sv
 except ImportError:
@@ -21,6 +22,7 @@ except ImportError:
     sys.exit(1)
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 def get_YoloModel(model_id, classes):
     model = YOLOWorld(model_id="yolo_world/l")
     model.set_classes(classes)
@@ -35,6 +37,58 @@ def get_YOLO_and_CLIP_model(classes, yolo_id = "yolo_world/l", clip_id = "clip-v
     return model, clip_model
 
 MODEL_NAME = "clip-vit-base32-torch"
+
+
+def remove_brackets(words):
+    # Remove text inside parentheses and brackets including the brackets themselves
+    words = re.sub(r'\((.*?)\)', r'\1', words)
+    words = re.sub(r'\[(.*?)\]', r'\1', words)
+    return words
+
+def remove_substrings(words):
+    word_list = [word.strip() for word in words.split(',')]
+    words_to_remove = set()
+    for word in word_list:
+        for other_word in word_list:
+            if word != other_word and word in other_word:
+                words_to_remove.add(word)
+    filtered_words = [word for word in word_list if word not in words_to_remove]
+    return ', '.join(filtered_words)
+
+def drop_words_with_chance(words, trigger_rate = 0.3, drop_chance=0.6):
+    if len(words) == 0:
+        return "cartoon"
+    
+    if random.random() > trigger_rate:
+        return words
+    
+    word_list = words.split(', ')
+    filtered_words = [word for word in word_list if random.random() > drop_chance]
+    if len(filtered_words)==0:
+        return words
+    else:
+        return ', '.join(filtered_words)
+
+def add_folder_name_to_files(main_folder, tag_dropping_rate = 0.3):
+    for root, dirs, files in os.walk(main_folder):
+        for file in files:
+            if file.endswith('.txt'):
+                file_path = os.path.join(root, file)
+                #folder_name = os.path.basename(root)
+                folder_name = get_folder_name(root)
+                #breakpoint()
+                with open(file_path, 'r+') as f:
+                    content = f.read()
+                    content = remove_brackets(content)
+                    
+                    if folder_name not in ["0other", "other"]:
+                        processed_content = remove_substrings(content)
+                        processed_content = drop_words_with_chance(processed_content, tag_dropping_rate)
+                        content = f"{folder_name}, {processed_content}"
+                    
+                    f.seek(0)
+                    f.write(content)
+                    f.truncate()
 
 def calculate_similarity_matrix(embeddings, batch_size):
     batch_size = min(embeddings.shape[0], batch_size)
@@ -97,7 +151,33 @@ def delete_similar_images(image_folder, similarity_threshold=0.95, embedding_bat
 
     print(f"Initial image count: {initial_image_count}, Images retained: {retained_image_count}, Images deleted: {deleted_image_count}")
 
+def get_folder_name(dirpath):
+    folder_name = os.path.basename(dirpath)
+
+    original_name = re.sub(r'^\d+_', '', folder_name)
+    if original_name is None: original_name = folder_name
+    return original_name
+
+def rename_subfolders(root_folder, num_image_per_epoch = 160):
+    for dirpath, dirnames, filenames in os.walk(root_folder, topdown=False):
+        image_count = sum(1 for f in filenames if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff')))
+        if image_count == 0: 
+            continue
+        
+        current_path = dirpath
+        original_name = get_folder_name(dirpath)
+
+        if original_name in ["other", "0other"]:
+            prefix = 1
+        else:
+            prefix = max(1, min(4, round(num_image_per_epoch / image_count )))
+            
+        parent_dir = os.path.dirname(dirpath)
+        new_path = os.path.join(parent_dir, f"{prefix}_{original_name}")
+        os.rename(current_path, new_path)
+
 def delete_similar_image_in_subfolders(parent_folder, model=None):
+    if model is None: model = get_clipModel()
     for subfolder in os.listdir(parent_folder):
         subfolder_path = os.path.join(parent_folder, subfolder)
         if os.path.isdir(subfolder_path):
