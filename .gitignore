@@ -3,4 +3,6 @@ __pycache__
 lib/__pycache__
 myenv
 myenv/*
+test_env
+test_env/*
 wd14_tagger_model

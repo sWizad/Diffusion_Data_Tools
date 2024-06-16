@@ -169,7 +169,7 @@ def capture_frames(video_path, num_frames,out_dir, model, mb, idx0 = 0):
 
 if __name__ == "__main__":
     video_folder = r'D:\Project\CivitAI\Disney\Princess\Test\video'  
-    captured_frames_per_min = 40
+    captured_frames_per_min = 20
     base_dir = r'D:\Project\CivitAI\Disney\Princess\Test\crop'
     classes = ["face", "cartoon object", "person"]
     offset_idx = 0

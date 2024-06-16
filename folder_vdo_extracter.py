@@ -4,9 +4,9 @@ from fastprogress import master_bar
 from lib.library import get_YOLO_and_CLIP_model, capture_frames, delete_similar_image_in_subfolders
 
 if __name__ == "__main__":
-    video_folder = r'D:\Project\CivitAI\Disney\Princess\Test\video'  
+    video_folder = r'D:\Project\CivitAI\Disney\SleepingB\video'  
     captured_frames_per_min = 40
-    base_dir = r'D:\Project\CivitAI\Disney\Princess\Test\crop'
+    base_dir = r'D:\Project\CivitAI\Disney\SleepingB\crop'
     classes = ["face", "cartoon object", "person"]
     offset_idx = 0
 
