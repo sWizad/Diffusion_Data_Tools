@@ -36,6 +36,15 @@ def get_YOLO_and_CLIP_model(classes, yolo_id = "yolo_world/l", clip_id = "clip-v
     clip_model = get_clipModel(clip_id)
     return model, clip_model
 
+def get_SwinIR_model(model_path = 'wd14_tagger_model\003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x2_GAN.pth', scale = 2):
+    from lib.swinir.swinir_network import SwinIR as net
+
+    model = net(upscale=scale, in_chans=3, img_size=64, window_size=8,
+                img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
+                mlp_ratio=2, upsampler='nearest+conv', resi_connection='1conv')
+    model.eval()
+    return model.to('cuda')
+
 MODEL_NAME = "clip-vit-base32-torch"
 
 
@@ -97,7 +106,7 @@ def scoring_prompt(folder_names):
     replacements = {
         'score_9': ['score_7_up', 'score_8_up', 'score_9',],
         'score_8': ['score_7_up', 'score_8_up',],
-        'score_7': ['score_7_up'],
+        'score_7': ['score_6_up', 'score_7_up',],
         'score_6': ['score_4_up', 'score_5_up', 'score_6_up',],
         'score_5': ['score_4_up', 'score_5_up',],
         'score_4': ['score_4_up']
@@ -138,7 +147,7 @@ def add_folder_name_to_files(main_folder, mode="last_only", tag_dropping_rate = 
                             folder_names = scoring_prompt(folder_names)
                         folder_names = [name for name in folder_names if name not in ["other", "0other","minor"]]
                         folder_name_content = ', '.join(folder_names[::-1])
-                        content = f"{folder_name_content}, {processed_content}"
+                        content = f"{folder_name_content}, {processed_content}" if len(folder_names) > 0 else processed_content
                         
                         f.seek(0)
                         f.write(content)
@@ -212,7 +221,6 @@ def get_folder_name(dirpath):
     if original_name is None: original_name = folder_name
     return original_name
 
-
 def get_folder_names(dirpath, main_root = None):
     if main_root is None:
         folder_name = os.path.basename(dirpath)
@@ -249,22 +257,25 @@ def rename_subfolders(root_folder, num_image_per_epoch = 160):
         new_path = os.path.join(parent_dir, f"{prefix}_{original_name}")
         os.rename(current_path, new_path)
 
-def copy_images(root_folder, output_folder):
+def copy_images_to_folder(root_folder, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     for dirpath, _, filenames in os.walk(root_folder):
-        image_files = [f for f in filenames if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'))]
-        if not image_files:
-            continue
-
-        sub_folder = os.path.basename(os.path.normpath(dirpath))
+        relative_path = os.path.relpath(dirpath, root_folder)
+        path_parts = relative_path.split(os.sep)
+        #if len(path_parts) < 2:
+        #    continue
+        sub_folder = path_parts[0]
         new_sub_folder_path = os.path.join(output_folder, sub_folder)
 
         if not os.path.exists(new_sub_folder_path):
             os.makedirs(new_sub_folder_path)
+            
+        for image_file in filenames:
+            if not image_file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff')):
+                continue
 
-        for image_file in image_files:
             base_name, ext = os.path.splitext(image_file)
             txt_file = f"{base_name}.txt"
 
@@ -311,23 +322,28 @@ def get_video_duration(video_path):
     cap.release()
     return duration, frame_count
 
-def resize_large_img(image):
-    if image.shape[0] > 1024 or image.shape[1] > 1024:
-        # Calculate aspect ratio
-        aspect_ratio = image.shape[1] / image.shape[0]
+def resize_large_img(image, max_size = 1024, use_target_ratio= True):
+    #if image.shape[0] > 1024 or image.shape[1] > 1024:
+    # Calculate aspect ratio
+    aspect_ratio = image.shape[1] / image.shape[0]
+    if use_target_ratio:
+        aspect_ratio = min(TARGET_RATIOS, key=lambda x: abs(x - aspect_ratio))
 
-        # Resize keeping aspect ratio
-        if image.shape[0] > image.shape[1]:
-            new_height = 1024
-            new_width = int(new_height * aspect_ratio)
-        else:
-            new_width = 1024
-            new_height = int(new_width / aspect_ratio)
-
-        image = cv2.resize(image, (new_width, new_height))
+    # Resize keeping aspect ratio
+    if image.shape[0] > image.shape[1]:
+        new_height = max_size #// 16
+        new_width = int(new_height * aspect_ratio)
+    else:
+        new_width = max_size #// 16
+        new_height = int(new_width / aspect_ratio)
+    
+    #new_width = new_width  * 16
+    #new_height = new_height * 16
+        
+    image = cv2.resize(image, (new_width, new_height))
     return image
 
-def crop_image_by_model(image, model, output_image_path):
+def crop_image_by_model_backup(image, model, output_image_path):
     results = model.infer(image,confidence=confidence_threshold)
     detections = sv.Detections.from_inference(results)
 
@@ -354,6 +370,125 @@ def crop_image_by_model(image, model, output_image_path):
         cropped_output_path = os.path.join(directory, "0x", filename)
         cv2.imwrite(cropped_output_path, resize_large_img(image))
 
+# Define target ratios
+TARGET_RATIOS = [1.0, 3/4, 4/3]
+def adjust_crop_coordinates(image, x1, y1, x2, y2):
+    height, width = image.shape[:2]
+    crop_width, crop_height = x2 - x1, y2 - y1
+    
+    # Calculate current aspect ratio
+    current_ratio = crop_width / crop_height
+    
+    # Find the closest target ratio
+    closest_ratio = min(TARGET_RATIOS, key=lambda x: abs(x - current_ratio))
+    
+    # Calculate the center of the original crop
+    center_x, center_y = (x1 + x2) / 2, (y1 + y2) / 2
+    
+    # Try to extend the crop to fit the ratio
+    if closest_ratio > current_ratio:
+        # Need to increase width
+        new_width = (crop_height * closest_ratio)
+        new_height = crop_height
+    else:
+        # Need to increase height
+        new_width = crop_width
+        new_height = (crop_width / closest_ratio)
+    
+    # Check if extended crop fits within the image
+    if (center_x - new_width/2 >= 0 and center_x + new_width/2 <= width and
+        center_y - new_height/2 >= 0 and center_y + new_height/2 <= height):
+        # Extended crop fits, use these dimensions
+        x1_new = max(0, center_x - new_width / 2)
+        x2_new = min(width, x1_new + new_width)
+        y1_new = max(0, center_y - new_height / 2)
+        y2_new = min(height, y1_new + new_height)
+    else:
+        # Extended crop doesn't fit, need to shrink
+        if closest_ratio > current_ratio:
+            # Shrink height
+            new_height = (crop_width / closest_ratio)
+            new_width = crop_width
+        else:
+            # Shrink width
+            new_width = (crop_height * closest_ratio)
+            new_height = crop_height
+        
+        x1_new = max(0, center_x - new_width / 2)
+        x2_new = min(width, x1_new + new_width)
+        y1_new = max(0, center_y - new_height / 2)
+        y2_new = min(height, y1_new + new_height)
+    
+    # Ensure we don't exceed image boundaries
+    x1_new = max(0, x1_new)
+    y1_new = max(0, y1_new)
+    x2_new = min(width, x2_new)
+    y2_new = min(height, y2_new)
+    
+    return int(x1_new), int(y1_new), int(x2_new), int(y2_new)
+
+def remove_letterbox(image, threshold_sum=20):
+    # Convert image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Sum the pixel values across each row
+    row_sums = np.sum(gray, axis=1)
+    
+    # Find the first and last non-black rows
+    non_black = np.where(row_sums > threshold_sum)[0]
+    if len(non_black) == 0:
+        return image  # Return original image if it's all below the threshold
+    
+    top = non_black[0]
+    bottom = non_black[-1]
+    
+    # Crop the image to remove the black bars
+    cropped = image[top:bottom+1, :]
+    
+    return cropped
+
+def crop_image_by_model(image, model, output_image_path, confidence_threshold=0.3):
+    image = remove_letterbox(image)
+    results = model.infer(image, confidence=confidence_threshold)
+    detections = sv.Detections.from_inference(results)
+
+    directory, filename = os.path.split(output_image_path)
+
+    count = 0
+    for id, xyxy in zip(detections.class_id, detections.xyxy):
+        x1, y1, x2, y2 = map(int, xyxy)
+        x1, y1, x2, y2 = adjust_crop_coordinates(image, x1, y1, x2, y2)
+        
+        if abs(x2-x1) < 250 or abs(y2-y1) < 250:
+            continue
+        
+        cropped_image = image[y1:y2, x1:x2]
+        max_dimension = max(abs(x2-x1), abs(y2-y1))
+        
+        if max_dimension > 768:
+            cropped_image = resize_large_img(cropped_image, 1024)
+        else:
+            cropped_image = resize_large_img(cropped_image, 512)
+            #cropped_image = upsampling_by_model(cropped_image,swinir)
+            #subfolder = "ss"
+        subfolder = f"{id:02d}"
+        
+        output_filename = f"{filename[:-4]}_{count}.{filename[-3:]}" if count > 0 else filename
+        count = count + 1
+        cropped_output_path = os.path.join(directory, subfolder, output_filename)
+        
+        os.makedirs(os.path.dirname(cropped_output_path), exist_ok=True)
+        cv2.imwrite(cropped_output_path, cropped_image)
+
+    if count == 0:
+        height, width = image.shape[:2]
+        x1, y1, x2, y2 = adjust_crop_coordinates(image, 0, 0, width, height)
+        
+        cropped_image = image[y1:y2, x1:x2]        
+        cropped_output_path = os.path.join(directory, "xx", filename)
+        cropped_image = resize_large_img(cropped_image, 1024)
+        os.makedirs(os.path.dirname(cropped_output_path), exist_ok=True)
+        cv2.imwrite(cropped_output_path, cropped_image)
 
 #ASP_RATIOS = [1/1, 1/2, 2/3, 3/4, 4/5, 2/1, 3/2, 5/3, 5/4, 16/9]
 resolutions = []
@@ -441,12 +576,19 @@ def backup_capture_frames(video_path, captured_frames_per_min, out_dir, model, m
         cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
         ret, frame = cap.read()
         if ret:
-            crop_image_by_model(frame, model, os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"))
+            crop_image_by_model(frame, model, 
+                                os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"),
+                                confidence_threshold=0.3,
+                                )
     
     cap.release()
     return frames
 
-def capture_frames(video_path, captured_frames_per_min, out_dir, model, start_time=0, end_time=None, mb=None, idx0=0):
+def capture_frames(video_path, captured_frames_per_min, out_dir, model, 
+                   start_time=0, end_time=None, 
+                   mb=None, idx0=0,
+                   confidence_threshold = 0.3,
+                   ):
     cap = cv2.VideoCapture(video_path, cv2.CAP_FFMPEG)
     
     duration, total_frames = get_video_duration(video_path)
@@ -467,7 +609,9 @@ def capture_frames(video_path, captured_frames_per_min, out_dir, model, start_ti
         cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
         ret, frame = cap.read()
         if ret:
-            crop_image_by_model(frame, model, os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"))
+            crop_image_by_model(frame, model, 
+                                os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"),
+                                confidence_threshold=confidence_threshold,)
     
     cap.release()
     return frames
@@ -481,5 +625,5 @@ def process_images_in_folder(folder_path, model, out_dir, mb=None,):
             image_path = os.path.join(folder_path, filename)
             image = cv2.imread(image_path)
             if image is not None:
-                output_path = os.path.join(out_dir, f"cropped_{filename}")
+                output_path = os.path.join(out_dir, f"{filename}")
                 crop_image_by_model(image, model, output_path)
