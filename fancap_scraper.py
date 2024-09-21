@@ -28,7 +28,6 @@ def download_image(url, filename, expected_dimensions):
     return False
 
 def download_batch(start_number, total_images, expected_dimensions, out_dir):
-    base_url = "https://ancdn.fancaps.net/{}.jpg"
     successful_downloads = 0
     consecutive_failures = 0
 
@@ -54,15 +53,22 @@ def download_batch(start_number, total_images, expected_dimensions, out_dir):
 
     return successful_downloads, consecutive_failures >= 20
 
+#base_url = "https://ancdn.fancaps.net/{}.jpg"
+base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+
 def main():
-    start_number = 26566278
+    start_number = 2733836
     total_images = 500
-    out_dir = 'data/kite'
-    max_iterations = 5
-    idx_offset = 6
+    out_dir = 'data/disney/beautyb/'
+    max_iterations = 30
+    idx_offset = 0
 
     # Get dimensions of the start image
-    start_url = f"https://ancdn.fancaps.net/{start_number}.jpg"
+    #start_url = f"https://ancdn.fancaps.net/{start_number}.jpg"
+    #start_url = f"https://cdni.fancaps.net/file/fancaps-movieimages/{start_number}.jpg"
+    #start_url = f"https://cdni.fancaps.net/file/fancaps-tvimages/{start_number}.jpg"
+    start_url = base_url.format(start_number)
     expected_dimensions = get_image_dimensions(start_url)
 
     if expected_dimensions is None:

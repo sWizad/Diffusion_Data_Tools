@@ -6,16 +6,20 @@ from fastprogress import master_bar, progress_bar
 
 
 if __name__ == "__main__":
-    folder_path =  r'data\kite'
-    base_dir = r"D:\Project\CivitAI\anime\akite\crop"
-    classes = ["face", "person", "cartoon",]
+    folder_path =  r'D:\Project\Code\Diffusion_Data_Tools\data\harry/7'
+    base_dir = r"D:\Project\CivitAI\movie\harry\crop\7"
+    classes = ["face", "person", "animal",]
 
     pipe = auto_pipeline(classes,base_dir=base_dir,
-                         #sr_model_path=None
+                         sr_model_path=None
                          )
-    pipe.confidence_threshold = 0.3
-    pipe.dim_threshold=0.8
+    pipe.confidence_threshold = 0.2
+    pipe.dim_threshold=0.75
     pipe.similarity_threshold=0.95
+    pipe.crop_pixels=140
+    pipe.pre_process = pipe.crop_image_top_bottom
+    #pipe.pre_process = lambda image: pipe.crop_image_top_bottom(image, crop_pixels=24)
+    #pipe.pre_process = None
  
     if 0:
         out_dir = pipe.make_folder("") 

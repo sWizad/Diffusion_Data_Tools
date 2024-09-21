@@ -23,7 +23,7 @@ def main_method(method, text_list, output):
 
         # if shorter side is over 640, just resize it to 640
         AlignMinSizeAction(640),
-    )[:50].export(  # only first 10 images
+    )[:250].export(  # only first 10 images
         # save images (with meta information from danbooru site)
         SaveExporter(output)
     )
@@ -37,12 +37,13 @@ if __name__ == '__main__':
         #'gwenom', 'storm_(x-men)', 'sabretooth', 'azazel_(x-men)', 'elektra_natchios', 'x-23'
         #'negasonic_teenage_warhead', 'domino_(marvel)', 'yukio_(x-men)', 'wolverine_(x-men)', 'angel_dust_(x-men)', 'colossus', 'juggernaut', 'morena_baccarin', 'wade_wilson'
         #'renamon', 'angewoman', 'fairimon', 'ladydevimon', 'beelstarmon', 'sakuyamon', 'gatomon', 'lilithmon', 'wargreymon', 'rosemon', 'ranamon', 'venusmon', 'guilmon', 'shutumon', 'mervamon', 'bastemon', 
-        'angewomon', 'gabumon', 'biyomon',
+        #'angewomon', 'gabumon', 'biyomon',
+        "krysdecker"
                  ]
 
     for name in name_list:
         text_list = [f'{name}']
-        output = f'data/digimon/{name}'
+        output = f'data/artist/{name}'
         main_method(DanbooruSource, text_list,output)
         #main_method(GcharAutoSource, text_list,output)
         main_method(Rule34Source, text_list,output)

@@ -67,6 +67,7 @@ class cropping_pipeline():
         self.base_dir = base_dir
         self.classes = classes
         self.mb = None
+        self.pre_process = None
         # maybe move to different function
         self.captured_frames_per_min = captured_frames_per_min 
         
@@ -83,6 +84,19 @@ class cropping_pipeline():
 
         return out_dir
 
+    def crop_image_top_bottom(self, image,):#  crop_pixels=130):
+        height, width, _ = image.shape
+
+        # Calculate the new dimensions
+        new_height = height - 2 * self.crop_pixels
+        if new_height <= 0:
+            print("Error: The crop size is larger than the image height.")
+            return
+
+        # Crop the image
+        cropped_image = image[self.crop_pixels:height-self.crop_pixels, :]
+        return cropped_image
+
     def process_images_in_folder(self,folder_path, out_dir,):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
@@ -92,6 +106,8 @@ class cropping_pipeline():
                 image_path = os.path.join(folder_path, filename)
                 image = cv2.imread(image_path)
                 if image is not None:
+                    if self.pre_process is not None: 
+                        image = self.pre_process(image)
                     output_path = os.path.join(out_dir, f"{filename}")
                     self.crop_image_by_model(image, output_path)
 
@@ -121,6 +137,8 @@ class cropping_pipeline():
             cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
             ret, frame = cap.read()
             if ret:
+                if self.pre_process is not None: 
+                    frame = self.pre_process(frame)
                 self.crop_image_by_model(frame, 
                                     os.path.join(out_dir, f"f_{1_000_000*idx0 + idx:08}.png"),)
         
@@ -147,6 +165,8 @@ class cropping_pipeline():
             
             if max_dimension >  self.dim_threshold * 1024:
                 cropped_image = resize_large_img(cropped_image, 1024)
+            elif hasattr(self, 'sr_model') and self.sr_model is  None:
+                continue
             else:
                 cropped_image = resize_large_img(cropped_image, 512)
             subfolder = f"{id:02d}"
@@ -232,7 +252,7 @@ class sr_pipeline():
         
         return small_images
 
-    def upsampling_small_images(self, folder_path, size_threshold=512):
+    def upsampling_small_images(self, folder_path, size_threshold=576):
         small_images = self.get_small_images(folder_path, size_threshold)
         count = 0
         for file_path in progress_bar(small_images, parent=self.mb):

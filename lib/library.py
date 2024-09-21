@@ -298,7 +298,7 @@ def copy_images_to_folder(root_folder, output_folder):
                     count += 1
                 shutil.copy2(src_txt_path, dest_txt_path)
 
-def delete_similar_image_in_subfolders(parent_folder, model=None):
+def delete_similar_image_in_subfolders(parent_folder, model=None, similarity_threshold = 0.95):
     if model is None: model = get_clipModel()
     for subfolder in os.listdir(parent_folder):
         subfolder_path = os.path.join(parent_folder, subfolder)
@@ -307,7 +307,7 @@ def delete_similar_image_in_subfolders(parent_folder, model=None):
                 print(f"Skipping empty folder: {subfolder}")
                 continue
             print(f"Processing folder: {subfolder}")
-            delete_similar_images(subfolder_path, model=model)
+            delete_similar_images(subfolder_path, model=model, similarity_threshold=similarity_threshold)
 
 confidence_threshold = 0.05
 
@@ -322,7 +322,7 @@ def get_video_duration(video_path):
     cap.release()
     return duration, frame_count
 
-def resize_large_img(image, max_size = 1024, use_target_ratio= True):
+def resize_large_img_old(image, max_size = 1024, use_target_ratio= True):
     #if image.shape[0] > 1024 or image.shape[1] > 1024:
     # Calculate aspect ratio
     aspect_ratio = image.shape[1] / image.shape[0]
@@ -342,6 +342,26 @@ def resize_large_img(image, max_size = 1024, use_target_ratio= True):
         
     image = cv2.resize(image, (new_width, new_height))
     return image
+
+TARGET_SIZES = {'512' :[(512, 512), (448, 576), (576, 448)],
+                '1024':[(1024, 1024), (896, 1152), (1152, 896)]}
+
+def resize_large_img(image, max_size = 1024,):
+    # Calculate aspect ratio
+    aspect_ratio = image.shape[1] / image.shape[0]
+
+    #target_size = min(TARGET_SIZES[str(max_size)], key=lambda size: abs(size[0] / size[1] - aspect_ratio))
+            # Find the closest target size based on aspect ratio and dimensions
+    def size_difference(size):
+        target_aspect_ratio = size[0] / size[1]
+        return abs(target_aspect_ratio - aspect_ratio) #+ abs(size[0] - image.shape[0]) + abs(size[1] - image.shape[1])
+
+    target_size = min(TARGET_SIZES[str(max_size)], key=size_difference)
+
+    # Resize image to the target size
+    image = cv2.resize(image, target_size)
+    return image
+
 
 def crop_image_by_model_backup(image, model, output_image_path):
     results = model.infer(image,confidence=confidence_threshold)
