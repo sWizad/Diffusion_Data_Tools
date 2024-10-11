@@ -47,20 +47,20 @@ def download_batch(start_number, total_images, expected_dimensions, out_dir):
                       total=total_images, 
                       desc=f"Downloading images to {out_dir}", 
                       unit="image"):
-            if consecutive_failures >= 20:
+            if consecutive_failures >= 100:
                 print(f"\nStopping early due to 100 consecutive failures in {out_dir}")
                 break
 
-    return successful_downloads, consecutive_failures >= 20
+    return successful_downloads, consecutive_failures >= 100
 
 #base_url = "https://ancdn.fancaps.net/{}.jpg"
-base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
-#base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
+base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
 
 def main():
-    start_number = 2733836
+    start_number = 272473
     total_images = 500
-    out_dir = 'data/disney/beautyb/'
+    out_dir = 'data/GOT/s3/'
     max_iterations = 30
     idx_offset = 0
 

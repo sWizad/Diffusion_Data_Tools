@@ -6,8 +6,8 @@ from fastprogress import master_bar, progress_bar
 
 
 if __name__ == "__main__":
-    folder_path =  r'D:\Project\Code\Diffusion_Data_Tools\data\harry/7'
-    base_dir = r"D:\Project\CivitAI\movie\harry\crop\7"
+    folder_path =  r'D:\Project\Code\Diffusion_Data_Tools\data\princess_sup\mummy2'
+    base_dir = r"D:\Project\CivitAI\Disney\princess live\0support\mummy2\crop"
     classes = ["face", "person", "animal",]
 
     pipe = auto_pipeline(classes,base_dir=base_dir,
