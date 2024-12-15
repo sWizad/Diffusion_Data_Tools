@@ -54,13 +54,13 @@ def download_batch(start_number, total_images, expected_dimensions, out_dir):
     return successful_downloads, consecutive_failures >= 100
 
 #base_url = "https://ancdn.fancaps.net/{}.jpg"
-#base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
-base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
 
 def main():
-    start_number = 272473
+    start_number = 2968671
     total_images = 500
-    out_dir = 'data/GOT/s3/'
+    out_dir = 'data/princess_sup/valerian/'
     max_iterations = 30
     idx_offset = 0
 
