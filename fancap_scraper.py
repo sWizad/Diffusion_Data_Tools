@@ -54,15 +54,19 @@ def download_batch(start_number, total_images, expected_dimensions, out_dir):
     return successful_downloads, consecutive_failures >= 100
 
 #base_url = "https://ancdn.fancaps.net/{}.jpg"
-base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
-#base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+#base_url = "https://mvcdn.fancaps.net/{}.jpg"
+#base_url = "https://tvcdn.fancaps.net/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
+base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-animeimages/{}.jpg"
+#base_url = "https://kissthemgoodbye.net/movie/albums/The%20Fobidden%20Kingdom%202008/TFK_2008_{}.jpg"
 
 def main():
-    start_number = 2968671
+    start_number = 277435
     total_images = 500
-    out_dir = 'data/princess_sup/valerian/'
+    out_dir = 'data/tv/got/ss3'
     max_iterations = 30
-    idx_offset = 0
+    idx_offset = 10
 
     # Get dimensions of the start image
     #start_url = f"https://ancdn.fancaps.net/{start_number}.jpg"
@@ -79,12 +83,12 @@ def main():
 
     for iteration in range(max_iterations):
         index = idx_offset + iteration
-        current_out_dir = os.path.join(out_dir, f'batch_{index}')
+        current_out_dir = os.path.join(out_dir, f'batch_{index:02d}')
         os.makedirs(current_out_dir, exist_ok=True)
 
         successful_downloads, early_stop = download_batch(start_number, total_images, expected_dimensions, current_out_dir)
 
-        print(f"\nBatch {index}: Successfully downloaded {successful_downloads} out of {total_images} images.")
+        print(f"Batch {index}: Successfully downloaded {successful_downloads} out of {total_images} images.")
 
         if early_stop:
             print(f"Stopping after batch {index} due to too many consecutive failures.")

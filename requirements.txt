@@ -1,0 +1,17 @@
+transformers 
+timm 
+torch
+#flash_attn 
+einops 
+pillow 
+requests
+opencv-python
+fastprogress
+numpy
+scikit-learn
+supervision
+inference-gpu[yolo-world]
+ultralytics
+git+https://github.com/openai/CLIP.git
+fiftyone
+ftfy

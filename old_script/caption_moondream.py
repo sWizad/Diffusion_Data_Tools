@@ -19,7 +19,7 @@ model = AutoModelForCausalLM.from_pretrained(model_id, trust_remote_code=True,
                                              #revision=revision,).to(device)
 tokenizer = AutoTokenizer.from_pretrained(model_id, revision=revision)
 
-img_dir = r"D:\Project\CivitAI\Disney\Princess\Test\draft\4_sprite"
+img_dir = r"E:\Research\symlink\CivitAI\anime\dandadan\draft\0other"
 prompt = "janninew"
 
 img_files = sorted([f for f in os.listdir(img_dir) if f.endswith(".png") or f.endswith(".jpg")])
@@ -66,9 +66,9 @@ for img_file in progress_bar(img_files):
     
     # Save the answer in a text file with the same name as the image
     with open(os.path.splitext(img_path)[0] + ".txt", "w") as f:
-        #f.write(str(answer))
-        f.write(f"{prompt}, "+str(answer))
-    print(answer)
+        f.write(str(answer))
+        #f.write(f"{prompt}, "+str(answer))
+    #print(answer)
         
     # Update master progress bar
     #mb.write(f"Processed: {img_file}", table=True)

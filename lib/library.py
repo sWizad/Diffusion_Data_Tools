@@ -4,6 +4,7 @@ from fastprogress import master_bar, progress_bar
 import numpy as np
 import torch
 import re, random, shutil
+from sklearn.metrics.pairwise import cosine_similarity
 try:
     import supervision as sv
 except ImportError:
@@ -20,7 +21,6 @@ try:
 except ImportError:
     print("Error: Please install it using: pip install -q fiftyone ftfy")
     sys.exit(1)
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 def get_YoloModel(model_id, classes):
@@ -121,6 +121,21 @@ def scoring_prompt(folder_names):
     
     return updated_folder_names
 
+def censor_prompt(processed_content):
+    replacements = {
+        'young girl' : 'girl',
+        'young woman' : 'woman',
+        'young boy' : 'boy',
+        '10 years' : '25 years',
+        '10-years' : '25-years',
+        'ten years' : 'twenty five years',
+        'late teens or' : '',
+        'early twenties' : 'mid twenties'
+    }
+    for key, value in replacements.items():
+        processed_content = processed_content.replace(key, value)
+    return processed_content
+
 def add_folder_name_to_files(main_folder, mode="last_only", tag_dropping_rate = 0.3, drop_chance = 0.6):
     for root, dirs, files in os.walk(main_folder):
         image_files = {os.path.splitext(file)[0] for file in files if file.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))}
@@ -141,6 +156,7 @@ def add_folder_name_to_files(main_folder, mode="last_only", tag_dropping_rate = 
                             processed_content = drop_words_with_chance(processed_content, tag_dropping_rate, drop_chance)
                         else: 
                             processed_content = content
+                        processed_content = censor_prompt(processed_content)
                         if mode == 'last_only':
                             folder_names = [folder_names[-1]]
                         if mode == 'all_score':
@@ -190,7 +206,7 @@ def make_samples(dataset, similarity_matrix, threshold):
             sample.save()
     return samples_to_remove, samples_to_keep
 
-def delete_similar_images(image_folder, similarity_threshold=0.95, embedding_batch_size=200, similarity_matrix_batch_size=1000, model=None):
+def delete_similar_images(image_folder, similarity_threshold=0.95, embedding_batch_size=250, similarity_matrix_batch_size=1000, model=None):
     dataset = fo.Dataset.from_dir(dataset_dir=image_folder, dataset_type=fo.types.ImageDirectory)
     
     initial_image_count = len(dataset)
