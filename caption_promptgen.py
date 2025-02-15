@@ -10,22 +10,31 @@ def is_image_file(filename):
     image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp'}
     return os.path.splitext(filename)[1].lower() in image_extensions
 
-def find_image_files(folder_path):
-    """
-    Recursively find all image files in the folder and its subfolders.
-    
-    Args:
-        folder_path: Path to the root folder
-    
-    Returns:
-        List of full paths to image files
-    """
+
+def find_image_files_ancestor(folder_path):
     image_files = []
     for root, _, files in os.walk(folder_path):
         for filename in files:
             if is_image_file(filename):
                 full_image_path = os.path.join(root, filename)
                 image_files.append(full_image_path)
+    return image_files
+
+def find_image_files(folder_path, overwrite_ok = False):
+    image_files = []
+    for root, _, files in os.walk(folder_path):
+        for filename in files:
+            if is_image_file(filename):
+                full_image_path = os.path.join(root, filename)
+
+                # Get the corresponding JSON filename
+                base_name = os.path.splitext(filename)[0]
+                json_filename = base_name + '.json'
+                json_path = os.path.join(root, json_filename)
+                
+                if not os.path.exists(json_path) or overwrite_ok:
+                    image_files.append(full_image_path)
+
     return image_files
 
 def batch_process_images(image_paths, model, processor, device, prompt, batch_size=16, mb=None):
@@ -219,12 +228,12 @@ def load_model(model_name):
     
 if __name__ == "__main__":
     # Configuration
-    folder_path = r"E:\Research\symlink\CivitAI\pksp\smogon\draft"
+    folder_path = r"E:\Research\symlink\CivitAI\disney\realcartoon\draft"
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
-    image_files = find_image_files(folder_path)
+    image_files = find_image_files(folder_path, overwrite_ok=True)
     print(f"Found {len(image_files)} image files to process")
 
     model, processor = load_model("MiaoshouAI/Florence-2-large-PromptGen-v2.0")

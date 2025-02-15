@@ -5,15 +5,15 @@ from fastprogress import master_bar
 from lib.pipelines import auto_pipeline
 
 if __name__ == "__main__":
-    video_folder = r'D:\Project\CivitAI\Disney\princess live\0support\pan tiantian\video'  
-    base_dir = r'D:\Project\CivitAI\Disney\princess live\0support\pan tiantian\crop'
+    video_folder = r'C:\Users\titan\Downloads\betterup'  
+    base_dir = r'E:\Research\symlink\CivitAI\korean\betterup'
     classes = ["face", "person", "character"]
     offset_idx = 0
     
     pipe = auto_pipeline(classes,base_dir=base_dir,sr_model_path=None)
-    pipe.captured_frames_per_min = 15
-    pipe.confidence_threshold = 0.4
-    pipe.dim_threshold=0.6
+    pipe.captured_frames_per_min = 270
+    pipe.confidence_threshold = 0.2
+    pipe.dim_threshold=0.8
     pipe.similarity_threshold=0.95
     pipe.crop_pixels = 0
     pipe.pre_process = pipe.crop_image_top_bottom

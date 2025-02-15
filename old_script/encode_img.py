@@ -10,13 +10,27 @@ from typing import Tuple
 import random
 
 def setup_models(
-        model_path = r'E:\Research\stable-diffusion-webui-reForge\models\RealESRGAN\RealESRGAN_x4plus.pth', 
+        model_mode = 'real', 
         ckpt_path = r"E:\Research\symlink\model\PonyV6XL_4base.safetensors", 
         device='cuda'):
     """Initialize RRDBNet and VAE models."""
+    # Setup VAE model
+    vae = AutoencoderKL.from_single_file(ckpt_path)
+    vae.eval()
+    vae.to(device)
+
     # Setup RRDBNet model
-    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, 
-                    num_block=23, num_grow_ch=32, scale=4)
+    if model_mode is None:
+        return None, vae
+    elif model_mode.lower() in ['real']:
+        model_path = r'E:\Research\stable-diffusion-webui-reForge\models\RealESRGAN\RealESRGAN_x4plus.pth'
+        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, 
+                        num_block=23, num_grow_ch=32, scale=4)
+    elif model_mode.lower() in ['anime']:
+        model_path = r'E:\Research\stable-diffusion-webui-reForge\models\RealESRGAN\RealESRGAN_x4plus_anime_6B.pth'
+        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, 
+                        num_block=6, num_grow_ch=32, scale=4)
+
     model.to(device)
     
     upsampler = RealESRGANer(
@@ -31,10 +45,6 @@ def setup_models(
         gpu_id=0
     )
     
-    # Setup VAE model
-    vae = AutoencoderKL.from_single_file(ckpt_path)
-    vae.eval()
-    vae.to(device)
     
     return upsampler, vae
 
@@ -49,6 +59,9 @@ def get_image_files(folder):
 
 def process_image(img, speed_scale, upsampler, visibility = 0.75):
     """Process single image with upsampling."""
+    if upsampler is None:
+        return img
+    
     h_input, w_input = img.shape[0:2]
     img_input = cv2.resize(
         img, 
@@ -283,10 +296,25 @@ class BucketManager:
         crop_bottom = crop_top + resized_height
         return crop_left, crop_top, crop_right, crop_bottom
 
+TARGET_SIZES = {'512' :[(512, 512), (448, 576), (576, 448)],
+                '1024':[(1024, 1024), (896, 1152), (1152, 896)]}
+
+def get_target_size(aspect_ratio, max_size = 1024,):
+
+    def size_difference(size):
+        target_aspect_ratio = size[0] / size[1]
+        return abs(target_aspect_ratio - aspect_ratio) #+ abs(size[0] - image.shape[0]) + abs(size[1] - image.shape[1])
+
+    target_size = min(TARGET_SIZES[str(max_size)], key=size_difference)
+    return target_size
+
 def main():
+    model_mode = None
     # Configuration
-    input_folder = 'data/test_in'
-    output_folder = 'data/test_out'
+    #input_folder = r'E:\Research\symlink\CivitAI\riot\arcane\img'
+    #output_folder = r'E:\Research\symlink\CivitAI\riot\arcane\img_up'
+    input_folder = r'data\test_in'
+    output_folder = r'data\test_out'
     latent_folder = output_folder
     speed_scale = 0.8        # use 1 to compute in full res (slowest)
     is_save_black = False
@@ -296,7 +324,7 @@ def main():
     os.makedirs(output_folder, exist_ok=True)
     
     # Setup models
-    upsampler, vae = setup_models(device=device)
+    upsampler, vae = setup_models(model_mode,device=device)
     
     # Get image files
     image_files = get_image_files(input_folder)
@@ -307,7 +335,10 @@ def main():
     for image_path in progress_bar(image_files):
         img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        h,w,_ = img.shape
+        resized_size = get_target_size(w/h)
         output = process_image(img_rgb, speed_scale, upsampler)
+        image, original_size, crop_ltrb = trim_and_resize_if_required(False, output, resized_size, resized_size)
         
         # Generate output paths
         relative_path = os.path.relpath(image_path, input_folder)
@@ -320,12 +351,9 @@ def main():
         if is_save_black :
             save_black_image(output.shape[0], output.shape[1], output_path)
         else: 
-            output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
+            output = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             cv2.imwrite(output_path, output)
         
-        h,w,_ = img.shape
-        resized_size = (w,h)
-        image, original_size, crop_ltrb = trim_and_resize_if_required(False, output, resized_size, resized_size)
         latent = generate_latent(image, vae, device)
 
         save_latents_to_disk(latent_path,

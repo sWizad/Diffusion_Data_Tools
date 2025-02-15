@@ -78,6 +78,46 @@ def process_files_with_numbers_v2(main_folder,json_path=r'old_script\pksp\fusion
                         
                             f.truncate()
 
+def process_files_with_numbers_v3(main_folder, json_path=r'old_script\pksp\fusiondex_links2.json'):
+    with open(json_path, 'r') as json_file:
+        fusion_dict = json.load(json_file)
+
+    for root, dirs, files in os.walk(main_folder):
+        image_files = {file for file in files if file.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))}
+        for image_filename in image_files:
+            match = re.match(r'(\d+)\.(\d+)[a-zA-Z]?\.png$', image_filename)
+            if match:
+                number1, number2 = match.groups()
+                
+                style_text = fusion_dict.get(number1, number1).lower()
+                body_text = fusion_dict.get(number2, number2).lower()
+                
+                txt_filename = f"{os.path.splitext(image_filename)[0]}.txt"
+                txt_path = os.path.join(root, txt_filename)
+                
+                with open(txt_path, 'w') as f:
+                    f.write(f"fusion {body_text}_body in {style_text}_style")
+
+def process_files_with_numbers_v3(main_folder, json_path=r'old_script\pksp\fusiondex_links2.json'):
+    with open(json_path, 'r') as json_file:
+        fusion_dict = json.load(json_file)
+
+    for root, dirs, files in os.walk(main_folder):
+        image_files = {file for file in files if file.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))}
+        for image_filename in image_files:
+            match = re.match(r'(\d+)\.(\d+)[a-zA-Z]?\.png$', image_filename)
+            if match:
+                number1, number2 = match.groups()
+                
+                style_text = fusion_dict.get(number1, number1).lower()
+                body_text = fusion_dict.get(number2, number2).lower()
+                
+                txt_filename = f"{os.path.splitext(image_filename)[0]}.txt"
+                txt_path = os.path.join(root, txt_filename)
+                
+                with open(txt_path, 'w') as f:
+                    f.write(f"fusion {body_text}_body in {style_text}_style")
+                    
 def process_files_with_files_name(folder_path):
     for root, _, files in os.walk(folder_path):
         images = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
@@ -105,6 +145,6 @@ def process_files_with_files_name(folder_path):
                     txt_file.truncate()
 
 if __name__ == "__main__":
-    folder_path =  r'E:\Research\symlink\CivitAI\pksp\smogon\draft'
+    folder_path =  r'E:\Research\symlink\CivitAI\pksp\smogon\img\back'
 
     process_files_with_files_name(folder_path)

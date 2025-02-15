@@ -6,8 +6,8 @@ from fastprogress import master_bar, progress_bar
 
 
 if __name__ == "__main__":
-    folder_path =  r'E:\Research\Diffusion_Data_Tools\data\tv\got\ss3'
-    base_dir = r"E:\Research\symlink\CivitAI\tv\got\ss3\crop"
+    folder_path =  r'E:\Research\Diffusion_Data_Tools\data\movie\labyrinth'
+    base_dir = r"E:\Research\symlink\CivitAI\movie\labyeinth\crop"
     classes = ["face", "person", "animal",]
 
     pipe = auto_pipeline(classes,base_dir=base_dir,
@@ -16,10 +16,10 @@ if __name__ == "__main__":
     pipe.confidence_threshold = 0.2 #defult: 0.2
     pipe.dim_threshold=0.85
     pipe.similarity_threshold=0.95
-    pipe.crop_pixels=0
-    #pipe.pre_process = pipe.crop_image_top_bottom
+    pipe.crop_pixels=140
+    pipe.pre_process = pipe.crop_image_top_bottom
     #pipe.pre_process = lambda image: pipe.crop_image_top_bottom(image, crop_pixels=24)
-    pipe.pre_process = None
+    #pipe.pre_process = None
  
     if 0:
         out_dir = pipe.make_folder("") 

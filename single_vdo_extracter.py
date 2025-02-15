@@ -3,10 +3,10 @@ import os
 from lib.library import get_YOLO_and_CLIP_model, capture_frames, delete_similar_image_in_subfolders
 
 if __name__ == "__main__":
-    video_path = r"D:\Project\CivitAI\Spiderman\video\spiderverse.mp4"
-    captured_frames_per_min = 100
-    base_dir = r"D:\Project\CivitAI\Spiderman\crop6"
-    classes = [f"face", f"cartoon object", "person",]
+    video_path = r"C:\Users\titan\Downloads\BABYMONSTER BATTER UP.mp4"
+    captured_frames_per_min = 270 #100
+    base_dir = r"E:\Research\symlink\CivitAI\korean\betterup"
+    classes = [f"face",  "person", f"cartoon object"]
     #classes = [f"cow", f"cartoon object", "titan",]
     offset_idx = 1
 
@@ -19,13 +19,13 @@ if __name__ == "__main__":
     model, clip_model = get_YOLO_and_CLIP_model( classes)
 
     out_dir = os.path.join(base_dir, video_name_without_ext)
-    for i in range(len(classes)):
-        os.makedirs(os.path.join(out_dir,f"{i:02d}"), exist_ok=True)
-    os.makedirs(os.path.join(out_dir,f"0x"), exist_ok=True)    
+    #for i in range(len(classes)):
+    #    os.makedirs(os.path.join(out_dir,f"{i:02d}"), exist_ok=True)
+    #os.makedirs(os.path.join(out_dir,f"0x"), exist_ok=True)    
 
 
     captured_frames = capture_frames(video_path, captured_frames_per_min, out_dir, model, idx0 = offset_idx,
-                                     start_time = 60*60*1+ 60*27+46, end_time= 60*60*1+ 60*32+14
+                                     #start_time = 60*60*1+ 60*27+46, end_time= 60*60*1+ 60*32+14
                                      )
     
     delete_similar_image_in_subfolders(out_dir, model=clip_model)

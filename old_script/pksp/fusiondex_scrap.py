@@ -6,6 +6,7 @@ from PIL import Image
 import io
 from fastprogress.fastprogress import master_bar, progress_bar
 from multiprocessing import Pool, cpu_count
+import random
 
 def process_image(img_data):
     # Create image from bytes
@@ -25,7 +26,7 @@ def process_image(img_data):
     # Convert to RGB
     return final.convert('RGBA')
 
-def download_sprite_images(url, target_folder="data/pkspif"):
+def download_sprite_images(url, target_folder="data/pksp/draft2"):
     """
     Scrapes a webpage for sprite images and downloads them.
     """
@@ -97,6 +98,24 @@ def generate_urls2(dex_list):
         urls.append(url)
     return urls
 
+def generate_urls3(dex_list):
+    """Generate 500 unique URLs by randomly selecting two numbers from dex_list (i and j can be the same)."""
+    urls = set()  # Use a set to ensure uniqueness
+    while len(urls) < 1000:
+        i = random.choice(dex_list)
+        j = random.choice(dex_list)
+        url = f"https://www.fusiondex.org/{i}.{j}/"
+        urls.add(url)
+    return list(urls)
+
+def generate_urls4(dex_list):
+    """Generate all URLs based on dex_list."""
+    urls = []
+    for i in dex_list:
+        url = f"https://www.fusiondex.org/{i}/"
+        urls.append(url)
+    return urls
+
 if __name__ == "__main__":
     dex_list = [100,250,290,294,339,392,
                 403, 50, 25, 43,201,  1,
@@ -104,9 +123,23 @@ if __name__ == "__main__":
                 241,468,132,439,406,  6,
                 27, 196,  4,358,287, 12,
                 3,  370, 26,282,300,360,]
-    dex_list = [i for i in range(1,470)]
+    dex_list = [i for i in range(1,501)]
+    dex_list = [ 
+                194, 10,347,219,215,412,
+                365,289,  5,  2, 92,311,
+                50,392,250,290,339,100,
+                294,403, 25,201, 43,  1,
+                132,421,151,373,406,241,
+                15, 170,133,468,439,  6,
+                27, 287,196,  4,300,  3,
+                358,370, 26, 12, 94,282,
+                360,197,295, 47,195,310,
+                36, 143,220,296,381,362,
+                24, 374,269,354,181,122,
+                ]
 
-    urls = generate_urls2(dex_list)
+    urls = generate_urls(dex_list)
+    urls = urls[:400]
     
     # Use multiprocessing Pool for parallel processing
     num_workers = min(cpu_count(), len(urls))  # Limit workers to number of URLs or CPUs

@@ -287,15 +287,18 @@ class auto_pipeline(clip_pipeline,cropping_pipeline,sr_pipeline):
         if self.sr_model is None: pass
         else: super().upsampling_small_images( out_dir)
 
-def save_image(file_path, image):
+def save_image(file_path, image, is_comparess = False):
     # Extract the file extension
     file_name, file_extension = os.path.splitext(file_path)
     file_extension = file_extension.lower()
 
-    # Check the file extension and save the image accordingly
-    if file_extension == '.jpg' or file_extension == '.jpeg':
-        # Save as JPEG with lower quality
-        cv2.imwrite(file_path, image, [cv2.IMWRITE_JPEG_QUALITY, 50])  # Quality range: 0-100
-    elif file_extension == '.png':
-        new_file_path = file_name + '.png'
-        cv2.imwrite(new_file_path, image, [cv2.IMWRITE_PNG_COMPRESSION, 9])  
+    if is_comparess:
+        # Check the file extension and save the image accordingly
+        if file_extension == '.jpg' or file_extension == '.jpeg':
+            # Save as JPEG with lower quality
+            cv2.imwrite(file_path, image, [cv2.IMWRITE_JPEG_QUALITY, 50])  # Quality range: 0-100
+        elif file_extension == '.png':
+            new_file_path = file_name + '.png'
+            cv2.imwrite(new_file_path, image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+    else:
+        cv2.imwrite(file_path, image,)

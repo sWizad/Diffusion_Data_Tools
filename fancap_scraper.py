@@ -56,17 +56,17 @@ def download_batch(start_number, total_images, expected_dimensions, out_dir):
 #base_url = "https://ancdn.fancaps.net/{}.jpg"
 #base_url = "https://mvcdn.fancaps.net/{}.jpg"
 #base_url = "https://tvcdn.fancaps.net/{}.jpg"
-#base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
-base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
+base_url = "https://cdni.fancaps.net/file/fancaps-movieimages/{}.jpg"
+#base_url = "https://cdni.fancaps.net/file/fancaps-tvimages/{}.jpg"
 #base_url = "https://cdni.fancaps.net/file/fancaps-animeimages/{}.jpg"
 #base_url = "https://kissthemgoodbye.net/movie/albums/The%20Fobidden%20Kingdom%202008/TFK_2008_{}.jpg"
 
 def main():
-    start_number = 277435
+    start_number = 2875469
     total_images = 500
-    out_dir = 'data/tv/got/ss3'
-    max_iterations = 30
-    idx_offset = 10
+    out_dir = 'data/movie/wonderw'
+    max_iterations = 40
+    idx_offset = 0
 
     # Get dimensions of the start image
     #start_url = f"https://ancdn.fancaps.net/{start_number}.jpg"
